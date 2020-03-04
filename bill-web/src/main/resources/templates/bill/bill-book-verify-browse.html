@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>票据核销情况查询</title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/static/layui-extend-config.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="/static/js/dateFormat.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/bg-style.css">
+    <style>
+        .remark{
+            color: #01AAED;
+        }
+    </style>
+</head>
+<body>
+<div id="navPad"></div>
+<script type="text/javascript">
+    $('#navPad').load('/component/nav');
+</script>
+
+<div class="layui-card">
+    <div class="layui-card-header">
+        票据核销金额查询统计页
+    </div>
+    <div class="layui-card-body">
+        <span class="remark">请选择您需要统计核销金额的范围：</span>
+        <form id="verifyForm" class="layui-form">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">日期范围:</label>
+                    <div class="layui-input-inline">
+                        <input id="beginDate" type="text" class="layui-input" lay-verify="required" required placeholder="请选择开始日期">
+                    </div>
+                    <div class="layui-form-mid">—</div>
+                    <div class="layui-input-inline">
+                        <input id="endDate" type="text" class="layui-input" lay-verify="required" required placeholder="请选择截止日期">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <div class="layui-input-inline">
+                        <button id="verifyBtn" lay-submit class="layui-btn">查询</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <fieldset class="layui-elem-field layui-field-title">
+            <legend>查询结果</legend>
+            <div class="layui-field-box">
+                <span>核销金额总计:</span><span id="verifyMoneyCount" style="color: crimson">0</span>
+                <table lay-filter="billBookList">
+                    <thead>
+                    <tr>
+                        <th lay-data="{field:'bookId'}">票据薄ID</th>
+                        <th lay-data="{field:'createDate'}">创建日期</th>
+                        <th lay-data="{field:'kindName'}">种类</th>
+                        <th lay-data="{field:'beginCode'}">头编码</th>
+                        <th lay-data="{field:'endCode'}">尾编码</th>
+                        <th lay-data="{field:'operator'}">操作者</th>
+                        <th lay-data="{field:'status'}">状态</th>
+                        <th lay-data="{field:'totalMoney'}">总金额</th>
+                        <th lay-data="{field:'verifyMoney',totalRow:true}">核销金额</th>
+                    </tr>
+                    </thead>
+                    <tbody id="bookBody"></tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function queryVerifyMoney(beginDate,endDate) {
+        let moneySum=0;
+        $.ajax({
+            url:'/bill/book/verify/sum'
+            ,type:'post'
+            ,async:false
+            ,data:{
+                'beginDate':beginDate
+                ,'endDate':endDate
+            },success:function (res) {
+                if (res['data']!=null){
+                    moneySum=res['data'];
+                }
+            },error:function () {
+                swal({
+                    title:'系统消息'
+                    ,text:'出现了一些问题系统未能正常返回'
+                    ,icon:'error'
+                });
+            }
+        });
+        return moneySum;
+    }
+    function queryVerifyBookList(beginDate,endDate) {
+        let bookList=null;
+        $.ajax({
+            url:'/bill/book/verify/query'
+            ,type:'post'
+            ,async: false
+            ,data:{
+                'beginDate':beginDate
+                ,'endDate':endDate
+            },success:function (res) {
+                if (res['data']==null){
+                    swal({
+                        title:'查询成功'
+                        ,text:'但是系统并未查询到相关信息'
+                        ,icon:'warning'
+                    });
+                } else {
+                    bookList=res['data'];
+                    swal({
+                        title:'查询成功'
+                        ,text:'已经为您自动合计核销金额'
+                        ,icon:'success'
+                    });
+                }
+            }
+        });
+        return bookList;
+    }
+    function getTd(res){
+        let td="";
+        if (res['statusCode']==0){
+            td = "<td>"+"<span style='color: #0000FF'>"+res['status']+"</span>"+"</td>";
+        }
+        if (res['statusCode']==1){
+            td = "<td>"+"<span style='color: #eb7350'>"+res['status']+"</span>"+"</td>";
+        }
+        if (res['statusCode']==2){
+            td = "<td>"+"<span style='color: #009f95'>"+res['status']+"</span>"+"</td>";
+        }
+        if (res['statusCode']==3){
+            td = "<td>"+"<span style='color: #FF00FF'>"+res['status']+"</span>"+"</td>";
+        }
+        if (res['statusCode']==4){
+            td = "<td>"+"<span style='color: #00FF00'>"+res['status']+"</span>"+"</td>";
+        }
+        if (res['statusCode']==5){
+            td = "<td>"+"<span style='color: crimson'>"+res['status']+"</span>"+"</td>";
+        }
+        if (res['statusCode']==6) {
+            td ="<td>"+"<span style='color: #0C0C0C'>"+res['status']+"</span>"+"</td>";
+        }
+        return td;
+    }
+    function tableRender(result){
+        if (result!=null){
+            $('#bookBody').html("");
+            $.each(result,function (n,res) {
+                console.log(res);
+                $('#bookBody').append(
+                    "<tr>"+
+                    "<td>"+res['billBookId']+"</td>"+
+                    "<td>"+res['createDate']+"</td>"+
+                    "<td>"+res['kindName']+"</td>"+
+                    "<td>"+"<span style='color: #009f95'>"+res['beginCode']+"</span>"+"</td>"+
+                    "<td>"+"<span style='color: #009f95'>"+res['endCode']+"</span>"+"</td>"+
+                    "<td>"+"<span style='color: crimson' class='userInfoBtn' href='"+res['operatorId']+"'>"+res['operator']+"</span>"+"</td>"+
+                    getTd(res)+
+                    "<td>"+res['totalMoney']+"</td>"+
+                    "<td>"+"<span style='color: #FD482C'>"+res['verifyMoney']+"</span>"+"</td>"+
+                    "</tr>"
+                );
+            });
+        } else {
+            $('#bookBody').html("");
+        }
+    }
+    layui.use(['element','form','layer','table','laydate'],function () {
+        let element=layui.element;
+        let form=layui.form;
+        let layer=layui.layer;
+        let table=layui.table;
+        let date=layui.laydate;
+
+        let beginDate=null;
+        let endDate=null;
+
+        $('#verifyForm').submit(function () {
+            event.preventDefault();
+            console.log(beginDate+" -- "+endDate);
+            $('#verifyMoneyCount').html(queryVerifyMoney(beginDate,endDate));
+            let books=queryVerifyBookList(beginDate,endDate);
+            console.log(books);
+            if (books!=null){
+                tableRender(books);
+            }
+            table.init('billBookList',{
+                limit:30
+                ,cellMinWidth: 80
+            });
+        });
+
+        date.render({
+            elem:'#beginDate'
+            ,type:'date'
+            ,value:new Date()
+            ,isInitValue:false
+            ,done:function (value) {
+                beginDate=value;
+                console.log(beginDate);
+            }
+        });
+
+        date.render({
+            elem:'#endDate'
+            ,type:'date'
+            ,value:new Date()
+            ,isInitValue:false
+            ,done:function (value) {
+                endDate=value;
+                console.log(endDate);
+            }
+        });
+
+        table.on('row(billBookList)',function (row) {
+            window.open('/bill/bill/browse?bookId='+row.data['bookId']);
+        });
+
+        table.init('billBookList',{
+            limit:30
+            ,cellMinWidth: 80
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>单位用户信息页</title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/static/layui-extend-config.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="/static/js/dateFormat.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/bg-style.css">
+    <style>
+        .remark {
+            color: #5FB878;
+        }
+    </style>
+</head>
+<body>
+<div id="navPad"></div>
+<script type="text/javascript">
+    $('#navPad').load('/component/nav');
+</script>
+<div class="layui-card">
+    <div class="layui-card-header">
+        单位角色浏览页
+    </div>
+    <div class="layui-card-body">
+        @if(user_list==null){
+        <span class="remark">暂无记录，或者系统故障</span>
+        @}else{
+        @if(session['login_user'].roleNum==3){
+        <span class="remark">可以添加领用员:</span>
+        <form id="addOperatorForm">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">名字:</label>
+                    <div class="layui-input-inline">
+                        <input id="userName" lay-verify="required" required class="layui-input" type="text"
+                               placeholder="请输入名字">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">联系电话:</label>
+                    <div class="layui-input-inline">
+                        <input id="phone" lay-verify="required|phone" required class="layui-input" type="text"
+                               placeholder="请输入联系电话">
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">账号:</label>
+                    <div class="layui-input-inline">
+                        <input id="account" lay-verify="required" required class="layui-input" type="text"
+                               placeholder="请设置账号">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">密码</label>
+                    <div class="layui-input-inline">
+                        <input id="password" lay-verify="required" required class="layui-input" type="password"
+                               placeholder="请设置密码">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">密码确认</label>
+                    <div class="layui-input-inline">
+                        <input id="passwordCfm" lay-verify="required" required class="layui-input" type="password"
+                               placeholder="请确认密码">
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button id="addUserBtn" lay-submit class="layui-btn">确定添加</button>
+                </div>
+            </div>
+        </form>
+        @}
+        @var pageNum=user_list.pageInfo.pageNum;
+        @var nextPageNo=pageNum+1;
+        @var prePageNo=pageNum-1;
+        <a href="/unit/operation/query?pageNo=${prePageNo}" class="layui-btn layui-btn-xs layui-btn-normal">上一页</a>
+        <a href="/unit/operation/query?pageNo=${nextPageNo}" class="layui-btn layui-btn-xs layui-btn-normal">下一页</a>
+        <span style="float: right">
+            第<span class="remark">${pageNum}</span>页
+            该页共<span class="remark">${user_list.pageInfo.size}</span>条记录
+            共<span class="remark">${user_list.pageInfo.pages}</span>页
+        </span>
+        <table id="userTable" lay-filter="userTable">
+            <thead>
+            <tr>
+                <th lay-data="{field:'userId'}">用户ID</th>
+                <th lay-data="{field:'name'}">姓名</th>
+                <th lay-data="{field:'role'}">角色</th>
+                <th lay-data="{field:'status'}">状态</th>
+                <th lay-data="{field:'phone'}">联系电话</th>
+                <th lay-data="{field:'createDate'}">创建日期</th>
+            </tr>
+            </thead>
+            <tbody>
+            @for(user in user_list.result){
+            <tr>
+                <td>${user.userId}</td>
+                <td>${user.name}</td>
+                <td>
+                    @if(user.roleNum==3){
+                    <span style="color: #00c1e4">${user.role}</span>
+                    @}else{
+                    <span style="color: #FF00FF">${user.role}</span>
+                    @}
+                </td>
+                <td>
+                    @if(user.statusCode==0){
+                    <span style="color: aqua">${user.status}</span>
+                    @}else{
+                    <span style="color: #FD482C">${user.status}</span>
+                    @}
+                </td>
+                <td>${user.phone}</td>
+                <td>${user.createDate}</td>
+            </tr>
+            @}
+            </tbody>
+        </table>
+        @}
+    </div>
+</div>
+<script type="text/javascript">
+    function getPageSize(){
+        let size=20;
+        $.ajax({
+            url:'/set/pageSize/get'
+            ,type: 'post'
+            ,async: false
+            ,success:function (res) {
+                if (res['data']!=null){
+                    size=res['data'];
+                }
+            }
+        });
+        return size;
+    }
+    layui.use(['element', 'layer', 'form','table'], function () {
+        let element = layui.element;
+        let layer = layui.layer;
+        let form = layui.form;
+        let table=layui.table;
+        let accReg=/^[a-zA-Z0-9]{6,16}$/;
+        let pwdReg=/^[a-zA-Z0-9]{6,20}$/;
+
+        table.on('row(userTable)',function (row) {
+            layer.open({
+                title:'角色信息'
+                ,type:2
+                ,content:['/user/info/query?userId='+row.data['userId'],'no']
+                ,area:['350px','350px']
+                ,shade:0
+            });
+        });
+
+        $('#addOperatorForm').submit(function () {
+            event.preventDefault();
+            let name=$('#userName').val();
+            let phone=$('#phone').val();
+            let account=$('#account').val();
+            let password=$('#password').val();
+            let pwdCfm=$('#passwordCfm').val();
+
+            if (!accReg.test(account)){
+                layer.msg('账号设置有误，账号需要由6-20个英文字母、数字组成');
+                return;
+            }
+
+            if (!pwdReg.test(password)){
+                layer.msg('密码设置有误，密码需要由6-20个英文字母、数字组成');
+                return;
+            }
+
+            if (password!=pwdCfm){
+                layer.msg('两次密码输入不一致');
+                return;
+            }
+
+            swal({
+                title: "添加角色确认",
+                text: "添加角色["+name+"]，您确定吗？",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((ok)=>{
+                if (ok) {
+                    let loadPad=layer.open({
+                        title: '系统消息'
+                        ,content: '正在为您完成操作，请稍候'
+                        ,type:3
+                    });
+                    $.ajax({
+                        url: '/user/role/add'
+                        ,type:'post'
+                        ,data:{
+                            'account':account
+                            , 'password':password
+                            ,'userName':name
+                            ,'phone':phone
+                        } ,success:function (res) {
+                            if (res['data']==0){
+                                swal({
+                                    title:'成功'
+                                    ,text:'已经为您成功添加了一名领收员，并按照您提供的信息设置了初始密码'
+                                    ,icon:'success'
+                                });
+                                layer.close(loadPad);
+                                location.reload();
+                            }
+                            if (res['data']==1){
+                                swal({
+                                    title:'失败'
+                                    ,text:'由于某些原因未能成功为您完成操作'
+                                    ,icon:'error'
+                                });
+                                layer.close(loadPad);
+                            }
+                            if (res['data']==2){
+                                swal({
+                                    title:'失败'
+                                    ,text:'您并没有此操作权限'
+                                    ,icon:'error'
+                                });
+                                layer.close(loadPad);
+                            }
+                        },error:function () {
+                            swal({
+                                title:'错误'
+                                ,text:'系统未能正常返回'
+                                ,icon:'error'
+                            });
+                            layer.close(loadPad);
+                        }
+                    });
+
+                }
+            });
+        });
+
+        table.init('userTable',{
+            limit:getPageSize()
+            ,cellMinWidth: 80
+        });
+    });
+</script>
+</body>
+</html>

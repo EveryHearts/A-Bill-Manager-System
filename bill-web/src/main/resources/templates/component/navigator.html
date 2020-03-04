@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<ul class="layui-nav layui-bg-green" style="text-align: right">
+    <li class="layui-nav-item">
+        <a id="userInfo">欢迎登陆！[${session['login_user'].name}]</a>
+    </li>
+    <li class="layui-nav-item">
+        <a>所在单位：[${session['login_user'].unit}]</a>
+    </li>
+    <li class="layui-nav-item">
+        <a><i class="layui-icon layui-icon-more-vertical"></i>系统菜单</a>
+        <dl class="layui-nav-child">
+            <dd><a target="_blank" href="/bill/book/verify/browse">计算核销</a></dd>
+            <dd><a target="_blank" href="/user/user/list?pageNo=1">单位人员</a></dd>
+            <dd><a target="_blank" href="/unit/operation/query?pageNo=1">操作记录</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a id="pageSizeSet"><i class="layui-icon layui-icon-set">系统设置</i></a>
+    </li>
+    <li class="layui-nav-item">
+        <a id="msgBtn"><i class="layui-icon layui-icon-reply-fill">故障反馈</i></a>
+    </li>
+    <li class="layui-nav-item">
+        <a id="logoutBtn"><i class="layui-icon layui-icon-close">退出登录</i></a>
+    </li>
+</ul>
+<span id="loginUserId" style="display: none">${session['login_user'].userId}</span>
+<script type="text/javascript">
+    layui.use(['element','layer'],function () {
+        let element=layui.element;
+        let layer=layui.layer;
+        let loginUserId=$('#loginUserId').html();
+
+        $('#msgBtn').click(function () {
+            event.preventDefault();
+            swal("可以给系统管理者反馈信息:", {
+                content: "input",
+            })
+                .then((value) => {
+                    if (value==null||$.trim(value).length<8){
+                        layer.msg("请输入至少8个有效字符！");
+                        return;
+                    }
+                    $.ajax({
+                        url:'/user/manager/msg/send'
+                        ,type:'post'
+                        ,data: {
+                            'content':value
+                        },success:function (res) {
+                            if (res['data']==0) {
+                                swal({
+                                    title:'成功'
+                                    ,text:'已经为您发送留言信息'
+                                    ,icon:'success'
+                                });
+                            }else{
+                                swal({
+                                    title:'失败'
+                                    ,text:'系统未能成功发送留言信息'
+                                    ,icon:'error'
+                                });
+                            }
+                        },error:function () {
+                            swal({
+                                title:'错误'
+                                ,text:'系统未能正常返回'
+                                ,icon:'error'
+                            });
+                        }
+                    });
+                });
+        });
+
+        $('#logoutBtn').click(function () {
+            event.preventDefault();
+            swal({
+                title: "系统消息",
+                text: "你确定要推出系统吗?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((ok)=>{
+                if (ok){
+                    $.ajax({
+                        url:'/user/logout'
+                        ,type:'post'
+                        ,success:function (res) {
+                            if (res['data']==0){
+                                location.href='/user/login';
+                            }
+                        },error:function () {
+                            swal({
+                                title:'操作失败'
+                                ,text:'由于某种原因，系统未能成功返回'
+                                ,icon:'error'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        $('#userInfo').click(function () {
+            event.preventDefault();
+            layer.open({
+                title:'角色信息'
+                ,type:2
+                ,content:['/user/info/query?userId='+loginUserId,'no']
+                ,area:['350px','350px']
+                ,shade:0
+            });
+        });
+
+        $('#pageSizeSet').click(function () {
+            event.preventDefault();
+            swal("在此设置页面显示的信息数量（可以设置10-50之间任意整数值）:", {
+                content: "input",
+            })
+                .then((value) => {
+                    if (value==null||value==''||!isNaN(value)){
+                        swal({
+                            title:'操作失败'
+                            ,text:'您填写的不是合法数值'
+                            ,icon:'warning'
+                        });
+                    }
+                    if (value<10||value>50){
+                        swal({
+                            title:'操作失败'
+                            ,text:'数值需要在10-50之间'
+                            ,icon:'warning'
+                        });
+                    }
+                    $.ajax({
+                        url:'/set/pageSize/modify'
+                        ,type:'post'
+                        ,data:{
+                            'pageSize':value
+                        }
+                        ,success:function (res) {
+                            if (res['data']==1){
+                                swal({
+                                    title:'操作失败'
+                                    ,text:'数值需要在10-50之间'
+                                    ,icon:'warning'
+                                });
+                            }else if (res['data']==0){
+                                swal({
+                                    title:'操作成功'
+                                    ,text:'已经为您设置了页面显示记录数（'+value+'）'
+                                    ,icon:'success'
+                                });
+                            }
+                        },error:function () {
+                            swal({
+                                title:'系统消息'
+                                ,text:'发生了某些问题，系统未能返回'
+                                ,icon:'error'
+                            });
+                        }
+                    });
+                });
+        });
+    });
+</script>
+</body>
+</html>

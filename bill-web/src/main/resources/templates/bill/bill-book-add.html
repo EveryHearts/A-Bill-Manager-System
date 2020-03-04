@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>票据薄添加</title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/static/layui-extend-config.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="/static/js/dateFormat.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/bg-style.css">
+</head>
+<body>
+<div id="navPad"></div>
+<script type="text/javascript">
+    $('#navPad').load('/component/nav');
+</script>
+<div id="mainPad">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            票据薄添加面板
+        </div>
+        <div class="layui-card-body" style="padding:0 3%;">
+            <form id="addBillForm" class="layui-form">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">日期:</label>
+                        <div class="layui-input-inline">
+                            <input id="date" class="layui-input" type="text" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">票据类型:</label>
+                        <div class="layui-input-block">
+                            <select id="kindSelect" class="add" name="kind" lay-filter="kindSelect">
+                                <option id="hintOpt" value="0"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">操作:</label>
+                        <div class="layui-input-block">
+                            <button id="addKindBtn" class="layui-btn">添加票据种类</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">票据前缀:</label>
+                        <div class="layui-input-block">
+                            <input id="billPrefix" class="layui-input add" placeholder="可以在此添加票据前缀">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">说明:</label>
+                        <div class="layui-input-block">
+                            <div id="remark" style="color: #0000FF;" class="layui-form-mid"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">编码起止:</label>
+                        <div class="layui-input-inline" style="width: 100px;">
+                            <input id="beginCode" type="text" placeholder="票据起始码" lay-verify="required|number" required autocomplete="off" class="layui-input add">
+                        </div>
+                        <div class="layui-form-mid">—</div>
+                        <div class="layui-input-inline" style="width: 100px;">
+                            <input id="endCode" type="text" placeholder="票据终止码" lay-verify="required|number" required autocomplete="off" class="layui-input add">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">份数:</label>
+                        <div class="layui-input-inline" style="width: 100px;">
+                            <input id="copies" type="text" lay-verify="number" required placeholder="设置票据薄份数" value="1" class="layui-input add">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">补充:</label>
+                        <div class="layui-input-block">
+                            <div id="info" style="color: #FD482C;" class="layui-form-mid"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">单张金额:</label>
+                        <div class="layui-input-inline">
+                            <input id="money" type="text" lay-verify="number" placeholder="请填写每张票据的金额" value="0" class="layui-input add">
+                        </div>
+                        <div class="layui-form-mid">元</div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">总金额:</label>
+                        <div class="layui-input-inline">
+                            <input id="totalMoney" style="color: crimson" readonly type="text" lay-verify="number" placeholder="请填写每张票据的金额" value="0" class="layui-input add">
+                        </div>
+                        <div class="layui-form-mid">元</div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">备注:</label>
+                    <div class="layui-input-block">
+                        <textarea id="description" class="layui-textarea add" placeholder="在此填写一些备注"></textarea>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button lay-submit class="layui-btn add">确认添加</button>
+                        <a target="_self" href="/bill/book/browse" class="layui-btn layui-btn-primary">返回到查看页面</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    function numLength(num){
+        let count=0;
+        while (num>=1){
+            num/=10;
+            count++;
+        }
+        return count;
+    }
+    function concatBillCode(pfx,numPrefix,idx,differ){
+        let codePfx=pfx+numPrefix;
+        if (differ==0){
+            return codePfx+idx;
+        }
+        for (let i=0;i<differ;i++){
+            codePfx+='0';
+        }
+        return codePfx+idx;
+    }
+    function checkCodeIsExists(begin){
+        let ok=false;
+        $.ajax({
+            url:'/bill/code/isExists'
+            ,type:'post'
+            ,data:{
+                'billCode':begin
+            },async:false
+            ,success:function (result) {
+                if (result['data']==1){
+                    swal({
+                        title:'操作失败'
+                        ,text:'已经有相同开头编号的票据存进系统了'
+                        ,icon:'warning'
+                    });
+                } else if (result['data']==0) {
+                    ok=true;
+                }
+            }
+        });
+        return ok;
+    }
+    layui.use(['element','form','layer'],function () {
+        let element=layui.element;
+        let form=layui.form;
+        let layer=layui.layer;
+
+        let kindValue=0;
+        let bookArray=new Array();
+        let prefixReg=/^[a-zA-Z]+[.]*$/;
+        let billNumReg=/^[0]+/;
+        let beginNum;
+        let endNum;
+        let billCodeTrue=false;
+        let billPrefixTrue=true;
+        let billMoneyTrue=false;
+        let copies=$('#copies').val();
+        let billCopies;
+        let billMoney=0;
+        let totalMoney=0;
+        let prefix;
+
+        $('#billPrefix').keyup(function () {
+            prefix=$('#billPrefix').val();
+            if (prefix==null||prefix==""){
+                $('#remark').html("");
+                billPrefixTrue=true;
+                return;
+            }
+            if (!prefixReg.test(prefix)){
+                $('#remark').html("<font color='#dc143c'>"+"您输入的票据前缀不合法，只能输入英文字母以及“.”号，英文字母为开头，“.”须在末尾"+"</font>");
+                billPrefixTrue=false;
+            }else{
+                billPrefixTrue=true;
+                $('#remark').html("");
+            }
+        });
+        
+        $('#endCode').keyup(function () {
+            beginNum=$('#beginCode').val();
+            if (beginNum==null||beginNum==''||isNaN(beginNum)||beginNum.length<4||beginNum.length>12){
+                $('#info').html('您输入了无效的起始编码！编码须由4-12位纯数字组成');
+                billCodeTrue=false;
+                return;
+            }else{
+                $('#info').html("");
+            }
+            endNum=$('#endCode').val();
+            if (beginNum.length!=endNum.length){
+                $('#info').html('您输入了不同长度的起止编码！请检查其正确性！');
+                billCodeTrue=false;
+                return;
+            } else {
+                $('#info').html("");
+            }
+            copies=$('#copies').val();
+            if (copies==null||copies==''||copies<1||copies>10){
+                $('#info').html('您输入了无效的票据薄份数，每次份数不能超过10份');
+                billCodeTrue=false;
+                return;
+            }
+            if (beginNum>endNum){
+                $('#info').html('您输入了无效的票据编码，起始码不应大于终止码');
+                billCodeTrue=false;
+                return;
+            }
+            billCopies=(endNum-beginNum+1)/copies;
+            if (!/^\d+$/.test(billCopies)){
+                $('#info').html('您输入的票据编码信息有误，请确保份数与编码数成比例');
+                billCodeTrue=false;
+                return;
+            }
+            if (billCopies>100){
+                $('#info').html('您输入的票据编码范围过大！每一份票据薄所持票据数不能超过100张');
+                billCodeTrue=false;
+                return;
+            }
+            $('#info').html("票据薄：<font color='blue'>"+copies+"份</font> 每份 <font color='blue'>"+billCopies+" 张</font>");
+            billCodeTrue=true;
+        });
+        
+        $('#addBillForm').submit(function () {
+            event.preventDefault();
+
+            $('#money').keyup();
+
+             if (!billCodeTrue) {
+                 layer.msg('您输入的票据编码有误，请仔细核对！');
+                 return ;
+             }
+
+             if (!billPrefixTrue){
+                 layer.msg('您输入的票据编码前缀有误，请仔细核对！');
+                 return ;
+             }
+
+             if (!billMoneyTrue){
+                 layer.msg('您输入的票据金额有误，请仔细核对！');
+                 return ;
+             }
+
+             if (kindValue==''||kindValue==0||kindValue==null){
+                 layer.msg('请选择票据类型');
+                 return;
+             }
+
+             let desc=$('#description').val();
+
+            let begin=0;
+            let end=0;
+            let bcopies=parseInt(copies);
+            let icopies=parseInt(billCopies);
+            if (!billNumReg.test(beginNum)&&!billNumReg.test(endNum)){
+                begin=parseInt(beginNum);
+                end=begin+icopies-1;
+                for (let i=1;i<=bcopies;i++){
+                    if (i!=1){
+                        begin=end+1;
+                    }
+                    end=parseInt(beginNum)+icopies*i-1;
+                    bookArray.push({
+                        'billKindId':kindValue
+                        ,'beginCode':prefix+begin
+                        ,'endCode':prefix+end
+                        ,'billCopies':billCopies
+                        ,'totalMoney':totalMoney/bcopies
+                        ,'description':desc
+                    });
+                }
+                console.log(bookArray);
+            }else {
+                let numBeginPrefix=beginNum.match(billNumReg);
+                let numEndPrefix=endNum.match(billNumReg);
+                console.log(numBeginPrefix+" - "+numEndPrefix);
+                console.log(endNum-beginNum);
+
+                let endGnum=parseInt(endNum);
+
+                begin=parseInt(beginNum);
+                end=begin+icopies-1;
+                for (let i=1;i<=bcopies;i++){
+                    if (i!=1){
+                        begin=end+1;
+                    }
+                    end=parseInt(beginNum)+icopies*i-1;
+                    bookArray.push({
+                        'billKindId':kindValue
+                        ,'beginCode':concatBillCode(prefix,numEndPrefix,begin,numLength(endGnum)-numLength(begin))
+                        ,'endCode':concatBillCode(prefix,numEndPrefix,end,numLength(endGnum)-numLength(end))
+                        ,'billCopies':billCopies
+                        ,'totalMoney':totalMoney/bcopies
+                        ,'description':desc
+                    });
+                }
+                console.log(bookArray);
+            }
+            console.log("ok");
+            let beginCode=prefix+$('#beginCode').val();
+            let endCode=prefix+$('#endCode').val();
+            swal({
+                title: "系统消息",
+                text: "您确定要添加该组票据薄吗？\n"+"编码为:"+beginCode+" — "+endCode,
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            })
+                .then((ok) => {
+                    if (ok) {
+                        $('.add').attr('disabled',true);
+                        let loading=layer.open({
+                            title: '系统消息'
+                            ,content: '正在为您完成操作，请稍候'
+                            ,type:3
+                        });
+                        if (checkCodeIsExists(beginCode)){
+                            if (checkCodeIsExists(endCode)){
+                                $.ajax({
+                                    url:'/bill/book/insert'
+                                    ,type:'post'
+                                    ,data:JSON.stringify(bookArray)
+                                    ,dataType:'json'
+                                    ,contentType : 'application/json;charset=utf-8'
+                                    ,success:function (res) {
+                                        if (res['data']==1){
+                                            bookArray.splice(0,bookArray.length);
+                                            swal({
+                                                title:'操作失败'
+                                                ,text:'由于某种原因，添加操作未能完成'
+                                                ,icon:'error'
+                                            });
+                                            layer.close(loading);
+                                            $('.add').removeAttr('disabled');
+                                        } else if (res['data']==0){
+                                            bookArray.splice(0,bookArray.length);
+                                            swal({
+                                                title:'操作成功'
+                                                ,text:'已经成功为您添加相应票据薄'
+                                                ,icon:'success'
+                                            });
+                                            layer.close(loading);
+                                            $('.add').removeAttr('disabled');
+                                        }
+                                    },error:function () {
+                                        bookArray.splice(0,bookArray.length);
+                                        swal({
+                                            title:'操作失败'
+                                            ,text:'由于某种原因，系统未能成功返回'
+                                            ,icon:'error'
+                                        });
+                                        layer.close(loading);
+                                        $('.add').removeAttr('disabled');
+                                    }
+                                });
+                            }else{
+                                $('.add').removeAttr('disabled');
+                                layer.close(loading);
+                                bookArray.splice(0,bookArray.length);
+                            }
+                        }else {
+                            $('.add').removeAttr('disabled');
+                            layer.close(loading);
+                            bookArray.splice(0,bookArray.length);
+                        }
+                    } else {
+                        $('.add').removeAttr('disabled');
+                        bookArray.splice(0,bookArray.length);
+                        swal("您取消了添加操作!");
+                    }
+                });
+        });
+
+        $('#money').keyup(function () {
+            if (!billCodeTrue){
+                $('#info').html('您输入的票据编码信息有误！请正确输入后再填写此项');
+                billMoneyTrue=false;
+                $('#totalMoney').val(0);
+                return;
+            }
+            billMoney=$('#money').val();
+            if (!/^\d+$/.test(billMoney)){
+                $('#info').html('您输入的票据金额信息有误！');
+                billMoneyTrue=false;
+                $('#totalMoney').val(0);
+                return;
+            }
+            totalMoney=billMoney*copies*billCopies;
+            $('#totalMoney').val(totalMoney);
+            $('#copies').keyup();
+            billMoneyTrue=true;
+        });
+
+        $('#copies').keyup(function () {
+            $('#endCode').keyup();
+        });
+
+        $('#beginCode').keyup(function () {
+            $('#endCode').keyup();
+        });
+
+        $('#date').val(new Date().Format("yyyy年MM月dd日"));
+
+        $.ajax({
+            url:'/bill/kind/query'
+            ,type:'post'
+            ,success:function (result) {
+                if (result['data']==null){
+                    console.log(result);
+                    $('.add').attr('disabled',true);
+                    $('#remark').html('您还没有添加任何票据种类，请添加后再执行操作！');
+                    form.render();
+                }
+                $.each(result['data'],function (n,kind) {
+                    $('#kindSelect').append("<option value='"+kind['billKindId']+"'>"+kind['kindName']+"</option>");
+                })
+                form.render('select');
+            }
+        });
+
+        form.on('select',function (data) {
+           //console.log(data);
+           kindValue=data.value;
+           //console.log(kindValue);
+        });
+
+        $('#addKindBtn').click(function () {
+            event.preventDefault();
+            swal('请输入您要添加的票据类型:',{
+                content:'input'
+            }).then((value)=>{
+                if (value==null){
+                    layer.msg("请输入有效字符！");
+                    return;
+                }
+                let nameReg=/^[\u4E00-\u9FA5A-Za-z0-9_]{4,12}$/;
+                if (!nameReg.test(value)){
+                    layer.msg("您输入的字符不合法，只能由4-12个中英文、数字以及_组成！");
+                    return;
+                }
+                $.ajax({
+                    url: '/bill/kind/add'
+                    ,type:'post'
+                    ,data:{
+                        'kindName':value
+                    }
+                    ,success:function (result) {
+                        if (result['data']==0){
+                            layer.msg("由于某种原因，票据类型添加失败");
+                        }else if (result['data']==-1){
+                            layer.msg('该票据种类已经存在');
+                        } else {
+                            $('.add').removeAttr('disabled');
+                            $('#remark').html('票据种类添加已成功');
+                            $('#kindSelect').append("<option value='"+result['data']+"'>"+value+"</option>");
+                            form.render('select');
+                            swal({
+                                title: "操作成功!",
+                                text: "已经为您添加新的票据种类！",
+                                icon: "success",
+                            });
+                        }
+                    }
+                });
+            })
+        });
+    });
+</script>
+</body>
+</html>

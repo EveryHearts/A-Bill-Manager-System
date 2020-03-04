@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员登陆</title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/static/layui-extend-config.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+</head>
+<body style="padding: 3%;" class="layui-bg-gray">
+<div id="titlePad">
+    <h1 style="text-align: center">系统管理员登陆</h1>
+</div>
+<div id="mainPad" style="margin: 6% auto 0 auto;padding: 10px;width: 350px;">
+    <form id="adminForm" class="layui-form layui-form-pane" method="post" action="/system/loginProcess">
+        <div class="layui-form-item">
+            <label class="layui-form-label">管理员账号</label>
+            <div class="layui-input-block">
+                <input class="layui-input" id="nameInput" type="text" name="adminName" autocomplete="off" placeholder="请输入管理员账号">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">管理员密码</label>
+            <div class="layui-input-block">
+                <input class="layui-input" id="passInput" type="password" name="adminPass" autocomplete="off" placeholder="请输入管理员密码">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">滑动验证</label>
+            <div class="layui-input-block">
+                <div id="slider"></div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button id="submitBtn" class="layui-btn" type="submit">登陆</button>
+                <button class="layui-btn layui-btn-primary" type="reset">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+    layui.use(['element','form','layer','sliderVerify'],function () {
+        var element=layui.element;
+        var form=layui.form;
+        var layer=layui.layer;
+        var slider=layui.sliderVerify.render({
+            elem:'#slider'
+        });
+
+        $('#adminForm').submit(function () {
+            var adminName=$('#nameInput').val();
+            var adminPass=$('#passInput').val();
+
+            if ($.trim(adminName)==null||$.trim(adminName)==''){
+                layer.msg("请输入账号");
+                slider.reset();
+                return false;
+            }
+
+            if ($.trim(adminPass)==null||$.trim(adminPass)==''){
+                layer.msg("请输入密码");
+                slider.reset();
+                return false;
+            }
+
+            if (!slider.isOk()) {
+                layer.msg("请滑动滑块进行验证");
+                return false;
+            }
+            return true;
+        });
+    })
+</script>
+@if(sys_simple_msg!=null||sys_simple_msg==true){
+    <script type="text/javascript">
+        layui.use(['layer'],function () {
+            var layer=layui.layer;
+
+            layer.msg("账号密码有误，登陆失败!");
+        });
+    </script>
+@}
+</body>
+</html>

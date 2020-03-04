@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>操作记录</title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/static/layui-extend-config.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="/static/js/dateFormat.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/bg-style.css">
+    <style>
+        .remark{
+            color: #FD482C;
+        }
+    </style>
+</head>
+<body>
+<div id="navPad"></div>
+<script type="text/javascript">
+    $('#navPad').load('/component/nav');
+</script>
+<div class="layui-card">
+    <div class="layui-card-header">
+        操作记录浏览页
+    </div>
+    <div class="layui-card-body">
+        @if(query_record == null){
+        <span class="remark">暂无操作记录</span>
+        @}else{
+        @var pageNum=query_record.pageInfo.pageNum;
+        @var nextPageNo=pageNum+1;
+        @var prePageNo=pageNum-1;
+        <a href="/unit/operation/query?pageNo=${prePageNo}" class="layui-btn layui-btn-xs layui-btn-normal">上一页</a>
+        <a href="/unit/operation/query?pageNo=${nextPageNo}" class="layui-btn layui-btn-xs layui-btn-normal">下一页</a>
+        <span style="float: right">
+            第<span class="remark">${pageNum}</span>页
+            该页共<span class="remark">${query_record.pageInfo.size}</span>条记录
+            共<span class="remark">${query_record.pageInfo.pages}</span>页
+        </span>
+        <table lay-filter="recordTable">
+            <thead>
+            <tr>
+                <th lay-data="{field:'unit'}">单位</th>
+                <th lay-data="{field:'user'}">操作者</th>
+                <th lay-data="{field:'operation'}">操作类型</th>
+                <th lay-data="{field:'objectSort'}">对象类型</th>
+                <th lay-data="{field:'objectId'}">对象ID</th>
+                <th lay-data="{field:'operationDate'}">执行时间</th>
+            </tr>
+            </thead>
+            <tbody>
+            @for(record in query_record.result){
+            <tr>
+                <td>${record.unit}</td>
+                <td>${record.user}</td>
+                <td>${record.operation}</td>
+                <td>${record.objectSort}</td>
+                <td>${record.objectId}</td>
+                <td>${record.operationDate}</td>
+            </tr>
+            @}
+            </tbody>
+        </table>
+        @}
+    </div>
+</div>
+<script type="text/javascript">
+    layui.use(['element','layer','table'],function () {
+        let element=layui.element;
+        let layer=layui.layer;
+        let table=layui.table;
+
+        table.init('recordTable',{
+            limit:30
+            ,cellMinWidth: 80
+        });
+    });
+</script>
+</body>
+</html>

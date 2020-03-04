@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户注册</title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/static/layui-extend-config.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <link rel="stylesheet" type="text/css" href="/static/layui-extends/step-lay/step.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/bg-style.css">
+</head>
+<body>
+<div style="padding: 3%;">
+    <div class="layui-card">
+        <div class="layui-card-header"><h3>用户信息填写</h3></div>
+        <div class="layui-card-body">
+            <p>首先，我们需要录入您以下信息，以便于以后的联系和管理</p>
+            <hr class="layui-bg-black">
+            <br>
+            <div class="layui-carousel" id="stepForm" lay-filter="stepForm" style="margin: 0 auto;">
+                <div carousel-item>
+                    <div>
+                        <form id="unitForm" class="layui-form" style="margin: 0 auto;max-width: 460px;padding-top: 40px;">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">单位名称:</label>
+                                <div class="layui-input-block">
+                                    <input id="unitName" type="text" name="unitName" placeholder="请输入单位名称" class="layui-input" lay-verify="required" required />
+                                </div>
+                            </div>
+                            <div class="layui-form-item" >
+                                <label class="layui-form-label">单位地址:</label>
+                                <div class="layui-input-block">
+                                    <input id="unitAddress" type="text" name="unitAddress" placeholder="请输入单位地址" class="layui-input" lay-verify="required" required />
+                                </div>
+                            </div>
+                            <div class="layui-form-item" >
+                                <label class="layui-form-label">联系电话:</label>
+                                <div class="layui-input-block">
+                                    <input id="unitPhone" type="text" name="unitPhone" placeholder="请输入联系电话" class="layui-input" lay-verify="phone" required />
+                                </div>
+                            </div>
+                            <div class="layui-form-item layui-form-text" >
+                                <label class="layui-form-label">单位简介:</label>
+                                <div class="layui-input-block">
+                                    <textarea id="unitDescription" name="unitDescription" placeholder="请输入单位简介" class="layui-textarea"></textarea>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <div class="layui-input-block">
+                                    <button class="layui-btn" lay-submit>
+                                        &emsp;下一步&emsp;
+                                    </button>
+                                    <a class="layui-btn layui-btn-primary" target="_self" href="/user/login">
+                                        返回登陆
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div>
+                        <form id="accountForm" class="layui-form" style="margin: 0 auto;max-width: 460px;padding-top: 40px;">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">账号:</label>
+                                <div class="layui-input-block">
+                                    <input id="account" type="text" class="layui-input" placeholder="请设置您的账号" lay-verify="required" required>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">密码:</label>
+                                <div class="layui-input-block">
+                                    <input id="password" type="password" class="layui-input" placeholder="请设置您的密码" lay-verify="required" required>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">密码确认:</label>
+                                <div class="layui-input-block">
+                                    <input id="passwordConfirm" type="password" class="layui-input" placeholder="请再次确认密码" lay-verify="required" required>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <div class="layui-input-block">
+                                    <button type="button" class="layui-btn layui-btn-primary pre">上一步</button>
+                                    <button class="layui-btn" lay-submit>
+                                        &emsp;设置完成&emsp;
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div>
+                        <form id="userForm" class="layui-form" style="margin: 0 auto;max-width: 460px;padding-top: 40px;">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">姓名:</label>
+                                <div class="layui-input-block">
+                                    <input id="userName" type="text" placeholder="请输入您的姓名" class="layui-input" lay-verify="required" required>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">性别:</label>
+                                <div class="layui-input-block">
+                                    <input type="radio" name="gender" value="0" title="男" checked>
+                                    <input type="radio" name="gender" value="1" title="女">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">年龄:</label>
+                                <div class="layui-input-inline">
+                                    <input id="age" placeholder="请输入年龄" class="layui-input" type="text" lay-verify="number" required>
+                                </div>
+                            </div>
+                            <div class="layui-form-item" >
+                                <label class="layui-form-label">联系电话:</label>
+                                <div class="layui-input-block">
+                                    <input id="phone" type="text" name="unitPhone" placeholder="请输入您个人的联系电话" class="layui-input" lay-verify="phone" required />
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">住址:</label>
+                                <div class="layui-input-inline">
+                                    <input id="address" placeholder="请填写住址" class="layui-input" type="text" required>
+                                </div>
+                            </div>
+                            <div class="layui-form-item" >
+                                <label class="layui-form-label">备注:</label>
+                                <div class="layui-input-block">
+                                    <textarea id="description" name="description" placeholder="可以选择填写备注" class="layui-textarea"></textarea>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <div class="layui-input-block">
+                                    <button type="button" class="layui-btn layui-btn-primary pre">上一步</button>
+                                    <button class="layui-btn" lay-submit>
+                                        &emsp;确认提交&emsp;
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div>
+                        <div style="text-align: center;margin-top: 90px;">
+                            <i class="layui-icon layui-circle"
+                               style="color: white;font-size:30px;font-weight:bold;background: #52C41A;padding: 20px;line-height: 80px;">&#xe605;</i>
+                            <div style="font-size: 24px;color: #333;font-weight: 500;margin-top: 30px;">
+                                注册成功
+                            </div>
+                            <div style="font-size: 14px;color: #666;margin-top: 20px;">已经为您自动登陆，欢迎使用本系统！</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    function checkAccount(acc){
+        let ok=false;
+        $.ajax({
+            url:'/user/account/check'
+            ,type:'post'
+            ,async:false
+            ,data:{
+                'account':acc
+            },success:function (res) {
+                console.log(res);
+                if (res['data']==0){
+                    ok=true;
+                } else {
+                    swal({
+                        title:'系统消息'
+                        ,text:'您输入的账号已存在'
+                        ,icon:'warning'
+                    });
+                }
+            }
+        });
+        return ok;
+    }
+    layui.use(['layer','element','form','step'],function () {
+        let layer=layui.layer;
+        let element=layui.element;
+        let form=layui.form;
+        let step=layui.step;
+        let gender=0;
+        let account=null;
+        let passord=null;
+
+        form.on('radio',function (data) {
+            gender=data.value;
+            console.log(gender);
+        });
+
+        step.render({
+            elem: '#stepForm',
+            filter: 'stepForm',
+            width: '100%', //设置容器宽度
+            stepWidth: '750px',
+            height: '500px',
+            stepItems: [{
+                title: '填写单位信息'
+            }, {
+                title: '设置账号密码'
+            }, {
+                title:'填写注册人信息'
+            }, {
+                title: '完成'
+            }]
+        });
+
+        $('#unitForm').submit(function () {
+            event.preventDefault();
+            let name=$('#unitName').val();
+            let address=$('#unitAddress').val();
+            let phone=$('#unitPhone').val();
+            let description=$('#unitDescription').val();
+            
+            if (name.length>15){
+                layer.msg("单位名称需要在15字以内");
+                return;
+            }
+
+            if (address.length>30){
+                layer.msg("单位地址需要在30字以内");
+                return;
+            }
+
+            if (description.length>140){
+                layer.msg("单位简介请控制在140字以内");
+                return;
+            }
+
+            $.ajax({
+                url:'/unit/register/checkName'
+                ,type:'post'
+                ,data:{
+                    'unitName':name
+                }
+                ,success:function (result) {
+                    if (result['data']!=0){
+                        layer.msg("您输入的单位名称已经存在，请检查名称的准确性，并与管理员联系");
+                    } else {
+                        $.ajax({
+                            url:'/unit/register/submit'
+                            ,type:'post'
+                            ,data:{
+                                'unitName':name
+                                ,'unitAddress':address
+                                ,'unitPhone':phone
+                                ,'unitDescription':description
+                            }
+                            ,success:function (result) {
+                                if (result['data']==0){
+                                    step.next('#stepForm');
+                                }
+                                if (result['data']==1){
+                                    layer.msg("请检查输入项目有没有遗漏！");
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        });
+
+        $('#accountForm').submit(function () {
+            event.preventDefault();
+            account=$('#account').val();
+            passord=$('#password').val();
+            let confirm=$('#passwordConfirm').val();
+            let accReg=/^[a-zA-Z0-9]{6,16}$/;
+            let pwdReg=/^[a-zA-Z0-9]{6,20}$/;
+            if (!checkAccount(account)){
+                return;
+            }
+            if (account.length>16) {
+                layer.msg("请检查您的账号，账号长度需要在6-16个字符之内！");
+                return;
+            }
+            if (!accReg.test(account)){
+                layer.msg("请检查您的账号，账号需要由最多16个英文字母及数字组成！");
+                return;
+            }
+            if (passord.length>20){
+                layer.msg("请检查您的密码，密码长度需要在6-20个字符以内！");
+                return;
+            }
+            if (!pwdReg.test(passord)){
+                layer.msg("请检查您的密码，密码需要由最多20个英文字母及数字组成！");
+                return;
+            }
+            if (passord!=confirm){
+                layer.msg("请检查您的密码，两次密码不一致！");
+                return;
+            }
+            step.next('#stepForm');
+        });
+        
+        $('#userForm').submit(function () {
+            event.preventDefault();
+            let userName=$('#userName').val();
+            let age=$('#age').val();
+            let userPhone=$('#phone').val();
+            let userAddr=$('#address').val();
+            let userDesc=$('#description').val();
+
+            let nameReg=/(^([a-zA-Z]+\s)*[a-zA-Z]+$)|(^[\u4e00-\u9fa5]+$)/;
+
+            if (!nameReg.test(userName)){
+                layer.msg("请检查您的姓名输入，其可以是中文名或英文名！");
+                return;
+            }
+            if (isNaN(age)){
+                layer.msg("请检查您的年龄输入，其只可以为数字！");
+                return;
+            }
+            if (age>100) {
+                layer.msg("请填写正确年龄！");
+                return;
+            }
+            if (userAddr.length>30) {
+                layer.msg("住址请控制在30个字以内！");
+                return;
+            }
+            if (userDesc.length>140){
+                layer.msg("备注只能输入最多140个字符！");
+                return;
+            }
+
+            swal({
+                title: "您确定提交注册请求吗？",
+                text: "请仔细确认您的账号和密码等信息填写无误！",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            })
+                .then((ok) => {
+                    if (ok) {
+                        $.ajax({
+                            url:'/user/register/submit'
+                            ,type:'post'
+                            ,data: {
+                                'userName':userName
+                                ,'gender':gender
+                                ,'age':age
+                                ,'phone':userPhone
+                                ,'description':userDesc
+                                ,'address':userAddr
+                                ,'account':account
+                                ,'password':passord
+                            }
+                            ,success:function (result) {
+                                if (result['data']==1) {
+                                    swal({
+                                        title:'提交失败'
+                                        ,text:'对不起，由于某些原因您的注册信息提交失败，请再试试，或者联系管理员'
+                                        ,icon:'error'
+                                        ,button:true
+                                    });
+                                }
+                                if (result['data']==0){
+                                    step.next('#stepForm');
+                                    swal({
+                                        title:'注册成功'
+                                        ,text:'已经为您自动登陆，欢迎使用本系统！'
+                                        ,icon:'success'
+                                        ,button:true
+                                    }).then(function () {
+                                        location.href='/bill/book/browse';
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+        });
+
+        $('.pre').click(function () {
+            step.pre('#stepForm');
+        });
+
+        $('.next').click(function () {
+            step.next('#stepForm');
+        });
+    });
+</script>
+</body>
+</html>

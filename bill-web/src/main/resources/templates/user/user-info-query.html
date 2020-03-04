@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/static/layui-extend-config.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/bill-window.css">
+</head>
+<body>
+@if(query_user!=null){
+<div class="layui-card">
+    <div class="layui-card-header">
+        角色信息查看页面
+    </div>
+    <div class="layui-card-body">
+        <span>单位：</span><span style="color: coral">${query_user.unit}</span>
+        <br>
+        <span>姓名：</span><span style="color: coral">${query_user.name}</span>
+        <br>
+        <span>电话：</span><span style="color: coral">${query_user.phone}</span>
+        <br>
+        <span>角色：</span><span style="color: coral">${query_user.roleValue}</span>
+        <br>
+        <span>状态：</span><span style="color: coral">${query_user.status}</span>
+        @if(query_user.userId==session['login_user'].userId){
+        <br>
+        <a target="_self" href="/user/info/modify" id="modifyBtn" class="layui-btn">修改密码</a>
+        @}
+        @if(session['login_user'].roleNum==3 && session['login_user'].userId != query_user.userId && query_user.statusCode != 1){
+        <a id="banBtn" class="layui-btn layui-btn-xs layui-btn-danger">禁用角色</a>
+        <span id="banUserId" style="display: none">${query_user.userId}</span>
+        <span id="banUserName" style="display: none">${query_user.name}</span>
+        <script type="text/javascript">
+            $('#banBtn').click(function () {
+                event.preventDefault();
+                let userId=$('#banUserId').html();
+                let name=$('#banUserName').html();
+                swal({
+                    title: "系统消息",
+                    text: "您确定要将 ["+name+"] 设置为禁用吗？此操作无法撤销",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                }).then((ok)=>{
+                    if (ok){
+                        let loading=layer.open({
+                            title: '系统消息'
+                            ,content: '正在为您完成操作，请稍候'
+                            ,type:3
+                        });
+                        $.ajax({
+                            url:'/user/status/ban'
+                            ,type:'post'
+                            ,data:{
+                                'userId':userId
+                            },success:function (res) {
+                                if (res['data']==0){
+                                    swal({
+                                        title:"成功"
+                                        ,text:'已经为您禁用该角色'
+                                        ,icon:'success'
+                                    });
+                                    layer.close(loading);
+                                    location.reload();
+                                }
+                                if (res['data']==1){
+                                    swal({
+                                        title:"失败"
+                                        ,text:'禁用角色失败'
+                                        ,icon:'error'
+                                    });
+                                    layer.close(loading);
+                                }
+                                if (res['data']==2) {
+                                    swal({
+                                        title:"失败"
+                                        ,text:'您没有禁用角色的权限'
+                                        ,icon:'error'
+                                    });
+                                    layer.close(loading);
+                                }
+                            },error:function () {
+                                swal({
+                                    title:"错误"
+                                    ,text:'系统未能正常返回'
+                                    ,icon:'error'
+                                });
+                                layer.close(loading);
+                            }
+                        });
+                    }
+                });
+            });
+        </script>
+        @}
+    </div>
+</div>
+@}else{
+<div class="layui-card">
+    <div class="layui-card-header">
+        角色信息查看页面
+    </div>
+    <div class="layui-card-body">
+        <span style="color: #0000FF;">对不起，您查看的角色不存在或您没有权限查看！</span>
+    </div>
+</div>
+@}
+<script type="text/javascript">
+    layui.use(['element','layer'],function () {
+        let element=layui.element;
+        let layer=layui.layer;
+    });
+</script>
+</body>
+</html>

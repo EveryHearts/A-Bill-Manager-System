@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>系统登陆</title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/static/layui-extend-config.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/bg-style.css">
+</head>
+<body style="padding: 3%;">
+<div id="titlePad">
+    <h1 style="text-align: center">欢迎登陆票据管理系统</h1>
+    <!--<p style="text-indent: 2em;color: #eb7350;">您需要登陆之后才能使用系统功能！</p>-->
+</div>
+<div id="mainPad" style="margin: 4% auto 0 auto;padding: 10px;width: 350px;">
+    <form id="loginForm" class="layui-form layui-form-pane">
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <div id="info" style="color: #FD482C;" class="layui-form-mid">您需要登陆之后才能使用系统功能！
+                    <a style="color: #2D93CA;text-decoration-line: none" href="/system/login" target="_self">管理员登陆</a></div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">账号</label>
+            <div class="layui-input-block">
+                <input class="layui-input" id="nameInput" type="text" name="adminName" autocomplete="off" placeholder="请输入账号">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">密码</label>
+            <div class="layui-input-block">
+                <input class="layui-input" id="passInput"  type="password" name="adminPass" autocomplete="off" placeholder="请输入密码">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">滑动验证</label>
+            <div class="layui-input-block">
+                <div id="slider"></div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button id="submitBtn" class="layui-btn">登陆</button>
+                <button id="registerBtn" class="layui-btn layui-btn-primary">立即注册</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+    layui.use(['element','form','layer','sliderVerify'],function () {
+        var element=layui.element;
+        var form=layui.form;
+        var layer=layui.layer;
+        var slider=layui.sliderVerify.render({
+            elem:'#slider'
+        });
+
+        $('#loginForm').submit(function () {
+            event.preventDefault();
+            var adminName=$('#nameInput').val();
+            var adminPass=$('#passInput').val();
+
+            if ($.trim(adminName)==null||$.trim(adminName)==''){
+                layer.msg("请输入账号");
+                slider.reset();
+                return;
+            }
+
+            if ($.trim(adminPass)==null||$.trim(adminPass)==''){
+                layer.msg("请输入密码");
+                slider.reset();
+                return;
+            }
+
+            if (!slider.isOk()) {
+                layer.msg("请滑动滑块进行验证");
+                return;
+            }
+
+            $.ajax({
+                url:'/user/login/valid'
+                ,type:'post'
+                ,'data':{
+                    'account':adminName
+                    ,'password':adminPass
+                }
+                ,success:function (result) {
+                    if (result['data']==1){
+                        layer.msg("您输入的账号密码有误，请仔细检查您的信息！");
+                        slider.reset();
+                        return;
+                    }
+                    if (result['data']==3){
+                        swal({
+                            title:'登陆失败'
+                            ,text: '您的账号被封禁或已被注销'
+                            ,icon: 'warning'
+                        });
+                    }
+                    if (result['data']==0){
+                        swal({
+                          title:'登陆成功'
+                          ,text:'您已经登陆系统，欢迎您！'
+                          ,icon:'success'
+                          ,button:true
+                        }).then(function () {
+                            location.href='/bill/book/browse';
+                        });
+                    }
+                }
+            });
+        });
+
+        $('#registerBtn').click(function () {
+            event.preventDefault();
+            location.href="/unit/register";
+        });
+    })
+</script>
+</body>
+</html>

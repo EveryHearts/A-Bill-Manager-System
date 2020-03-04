@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>票就浏览页</title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/static/layui-extend-config.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="/static/js/dateFormat.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/bg-style.css">
+    <style>
+        .remark{
+            color: #FD482C;
+        }
+    </style>
+</head>
+<body>
+<div id="navPad"></div>
+<script type="text/javascript">
+    $('#navPad').load('/component/nav');
+</script>
+
+<div class="layui-card">
+    <div class="layui-card-header">
+        票据信息浏览页
+    </div>
+    <div class="layui-card-body">
+        @if(query_book==null){
+        <span style="color: #FD482C">抱歉，您所查看的票据信息不存在，或者您并没有权限查看它</span>
+        @}else{
+
+        <span>所属单位：</span><span class="remark">${query_book.unit}</span>&nbsp;
+        <span>领用者：</span><span class="remark">${query_book.operator}</span>
+        <br>
+        <span>编码范围：</span><span class="remark">${query_book.beginCode}</span>—<span class="remark">${query_book.endCode}</span>
+        <br>
+        <span>票据张数：</span><span class="remark">${query_book.copies}</span>&nbsp;
+        <span>票据薄状态：</span><span class="remark">${query_book.status}</span>
+        <br>
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;总金额：</span><span class="remark">${query_book.totalMoney}</span>
+        <span>核销金额：</span><span class="remark">${query_book.verifyMoney}</span>
+        <br>
+        @if(session['login_user'].roleNum==3||session['login_user'].roleNum==1){
+        <a id="verifyBtn" class="layui-btn">
+            核销票据
+        </a>
+        @}
+        @if(session['login_user'].roleNum==3){
+        <a id="banBtn" class="layui-btn layui-btn-primary">
+            作废票据
+        </a>
+        @}
+        @if(session['login_user'].roleNum==1){
+        <a id="receiveBtn" class="layui-btn layui-btn-primary">
+            领收票据
+        </a>
+        @}
+        <span id="bookIdSpan" style="display:none;">${query_book.billBookId}</span>
+        <fieldset class="layui-elem-field layui-field-title">
+            <legend>票据信息</legend>
+            <div class="layui-field-box">
+                <button id="preBtn" class="layui-btn layui-btn-normal layui-btn-xs">上一页</button>
+                <button id="nextBtn" class="layui-btn layui-btn-normal layui-btn-xs">下一页</button>
+                <a id="queryAllBtn" class="layui-btn layui-btn-xs layui-btn-primary">查看全部</a>
+                <a id="queryReceivBtn" class="layui-btn layui-btn-xs layui-btn-primary">只看已领收</a>
+                <a id="queryUseBtn" class="layui-btn layui-btn-xs layui-btn-primary">只看已使用</a>
+                @if(query_book.statusCode != 3 && query_book.statusCode != 4 && query_book.statusCode != 5  && query_book.statusCode != 6){
+                <a id="useBillBtn" class="layui-btn layui-btn-xs">标记使用</a>
+                @}
+                <span id="statusRemark" style="color: #eb7350">全部</span>
+                <span style="float: right;">
+                    第
+                    <span class="remark" id="pageNoSpan"></span>
+                    页
+                    -
+                    该页有
+                    <span class="remark" id="SizeSpan"></span>
+                    数据
+                    -
+                    共
+                    <span class="remark" id="pageSizes"></span>
+                    页
+                </span>
+            </div>
+            <table id="billList" lay-filter="billList">
+                <thead>
+                <tr>
+                    <th lay-data="{type:'checkbox',fixed:'left'}"></th>
+                    <th lay-data="{field:'billId'}">票据ID</th>
+                    <th lay-data="{field:'kindName'}">种类</th>
+                    <th lay-data="{field:'billCode'}">票据编码</th>
+                    <th lay-data="{field:'operator'}">操作者</th>
+                    <th lay-data="{field:'status'}">状态</th>
+                    <th lay-data="{field:'money'}">票面金额</th>
+                </tr>
+                </thead>
+                <tbody id="bookBody"></tbody>
+            </table>
+        </fieldset>
+
+        <script type="text/javascript">
+            function queryBills(bookId,pageNo){
+                let result=null;
+                $.ajax({
+                    url:'/bill/bill/list/query'
+                    ,type:'post'
+                    ,async:false
+                    ,data:{
+                        'bookId':bookId
+                        ,'pageNo':pageNo
+                    },success:function (res) {
+                        if (res['data']==null){
+                            $('#pageNoSpan').html(0);
+                            $('#pageSizes').html(0);
+                            $('#SizeSpan').html(0);
+                            swal({
+                                title:'系统消息'
+                                ,text:'查询成功，好像并没有相关数据'
+                                ,icon:'success'
+                            });
+                        } else {
+                            $('#pageNoSpan').html(res['data'].pageInfo.pageNum);
+                            $('#pageSizes').html(res['data'].pageInfo.pages);
+                            $('#SizeSpan').html(res['data'].pageInfo.size);
+                            result=res;
+                        }
+                    },error:function () {
+                        swal({
+                            title:'系统消息'
+                            ,text:'发生了某些问题，系统未正常返回'
+                            ,icon:'error'
+                        });
+                    }
+                });
+                return result;
+            }
+            function queryBillsByStatus(bookId,pageNo,statusCode){
+                let result=null;
+                $.ajax({
+                    url:'/bill/bill/list/query/status'
+                    ,type:'post'
+                    ,async:false
+                    ,data:{
+                        'bookId':bookId
+                        ,'pageNo':pageNo
+                        ,'statusCode':statusCode
+                    },success:function (res) {
+                        if (res['data']==null){
+                            $('#pageNoSpan').html(0);
+                            $('#pageSizes').html(0);
+                            $('#SizeSpan').html(0);
+                            swal({
+                                title:'系统消息'
+                                ,text:'查询成功，好像并没有相关数据'
+                                ,icon:'success'
+                            });
+                        } else {
+                            $('#pageNoSpan').html(res['data'].pageInfo.pageNum);
+                            $('#pageSizes').html(res['data'].pageInfo.pages);
+                            $('#SizeSpan').html(res['data'].pageInfo.size);
+                            result=res;
+                        }
+                    },error:function () {
+                        swal({
+                            title:'系统消息'
+                            ,text:'发生了某些问题，系统未正常返回'
+                            ,icon:'error'
+                        });
+                    }
+                });
+                return result;
+            }
+            function getPageSize(){
+                let size=20;
+                $.ajax({
+                    url:'/set/pageSize/get'
+                    ,type: 'post'
+                    ,async: false
+                    ,success:function (res) {
+                        if (res['data']!=null){
+                            size=res['data'];
+                        }
+                    }
+                });
+                return size;
+            }
+            function getTd(res){
+                let td="";
+                if (res['statusCode']==0){
+                    td = "<td>"+"<span style='color: #0000FF'>"+res['status']+"</span>"+"</td>";
+                }
+                if (res['statusCode']==1){
+                    td = "<td>"+"<span style='color: #eb7350'>"+res['status']+"</span>"+"</td>";
+                }
+                if (res['statusCode']==2){
+                    td = "<td>"+"<span style='color: #009f95'>"+res['status']+"</span>"+"</td>";
+                }
+                if (res['statusCode']==3){
+                    td = "<td>"+"<span style='color: #FF00FF'>"+res['status']+"</span>"+"</td>";
+                }
+                if (res['statusCode']==4){
+                    td = "<td>"+"<span style='color: #00FF00'>"+res['status']+"</span>"+"</td>";
+                }
+                if (res['statusCode']==5){
+                    td = "<td>"+"<span style='color: crimson'>"+res['status']+"</span>"+"</td>";
+                }
+                if (res['statusCode']==6) {
+                    td ="<td>"+"<span style='color: #0C0C0C'>"+res['status']+"</span>"+"</td>";
+                }
+                return td;
+            }
+            function tableRender(result){
+                if (result!=null){
+                    $('#bookBody').html("");
+                    $.each(result,function (n,res) {
+                        console.log(res);
+                        $('#bookBody').append(
+                            "<tr>"+"<td></td>"+
+                            "<td>"+res['billId']+"</td>"+
+                            "<td>"+res['billKind']+"</td>"+
+                            "<td>"+"<span style='color: #009f95'>"+res['code']+"</span>"+"</td>"+
+                            "<td>"+"<span style='color: crimson' class='userInfoBtn' href='"+res['operatorId']+"'>"+res['operator']+"</span>"+"</td>"+
+                            getTd(res)+
+                            "<td>"+"<span style='color: #FD482C'>"+res['money']+"</span>"+"</td>"+
+                            "</tr>"
+                        );
+                    });
+                } else {
+                    $('#bookBody').html("");
+                }
+            }
+            layui.use(['element','layer','form','table'],function () {
+                let element=layui.element;
+                let layer=layui.layer;
+                let form=layui.form;
+                let table=layui.table;
+
+                let bookId=$('#bookIdSpan').html();
+                let statusCode=0;//0 全部   1  已领收   2   已使用
+                let pageNo=1;
+                let isStatusQuery=false;
+                let data=null;
+                let selectData=[];
+
+                table.on('checkbox(billList)',function (res) {
+                    let checkStatus=table.checkStatus('billList');
+                    selectData=checkStatus.data;
+                });
+
+                $('#verifyBtn').click(function () {
+                    event.preventDefault();
+                    swal({
+                        title: "票据薄核销确认",
+                        text: "一旦更新票据状态将无法更改，您考虑好了吗？",
+                        icon: "warning",
+                        buttons: true,
+                        dangerMode: true,
+                    }).then((ok)=>{
+                        if (ok){
+                            $.ajax({
+                                url:'/bill/book/verify/confirm'
+                                ,type:'post'
+                                ,data:{
+                                    'bookId':bookId
+                                },success:function (res) {
+                                    if (res['data']==2){
+                                        var confm=false;
+                                        swal({
+                                            title:'操作失败'
+                                            ,text:'您没有相应的权限，或者票据薄状态并不允许完成此操作'
+                                            ,icon:'error'
+                                        })
+                                    }
+                                    if (res['data']==1){
+                                        swal({
+                                            title: "票据薄核销确认",
+                                            text: "该票据薄还有未使用的票据，操作会使未使用的票据作废，其作废票据金额不会合计到该薄核销金额上，您确定吗？",
+                                            icon: "warning",
+                                            buttons: true,
+                                            dangerMode: true,
+                                        }).then((ok)=>{
+                                            if (ok){
+                                                let loadPad=layer.open({
+                                                    title: '系统消息'
+                                                    ,content: '正在为您完成操作，请稍候'
+                                                    ,type:3
+                                                });
+                                                $.ajax({
+                                                    url:'/bill/book/status/verify'
+                                                    ,type:'post'
+                                                    ,data:{
+                                                        'bookId':bookId
+                                                    },success:function (res) {
+                                                        if (res['data']==0){
+                                                            swal({
+                                                                title:'操作成功'
+                                                                ,text:'已经成功为您更新票据薄状态'
+                                                                ,icon:'success'
+                                                            });
+                                                            layer.close(loadPad);
+                                                            location.reload();
+                                                        }
+                                                        if (res['data']==1){
+                                                            swal({
+                                                                title:'操作失败'
+                                                                ,text:'由于某种原因，添加操作未能完成'
+                                                                ,icon:'error'
+                                                            });
+                                                            layer.close(loadPad);
+                                                        }
+                                                        if (res['data']==2){
+                                                            swal({
+                                                                title:'操作失败'
+                                                                ,text:'您没有权限，或者票据薄状态不允许完成此操作'
+                                                                ,icon:'warning'
+                                                            });
+                                                            layer.close(loadPad);
+                                                        }
+                                                    },error:function () {
+                                                        swal({
+                                                            title:'操作失败'
+                                                            ,text:'由于某种原因，系统未能成功返回'
+                                                            ,icon:'error'
+                                                        });
+                                                        layer.close(loadPad);
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    }
+                                    if(res['data']==0){
+                                        let loadPad=layer.open({
+                                            title: '系统消息'
+                                            ,content: '正在为您完成操作，请稍候'
+                                            ,type:3
+                                        });
+                                        $.ajax({
+                                            url:'/bill/book/status/verify'
+                                            ,type:'post'
+                                            ,data:{
+                                                'bookId':bookId
+                                            },success:function (res) {
+                                                if (res['data']==0){
+                                                    swal({
+                                                        title:'操作成功'
+                                                        ,text:'已经成功为您更新票据薄状态'
+                                                        ,icon:'success'
+                                                    });
+                                                    layer.close(loadPad);
+                                                    location.reload();
+                                                }
+                                                if (res['data']==1){
+                                                    swal({
+                                                        title:'操作失败'
+                                                        ,text:'由于某种原因，添加操作未能完成'
+                                                        ,icon:'error'
+                                                    });
+                                                    layer.close(loadPad);
+                                                }
+                                                if (res['data']==2){
+                                                    swal({
+                                                        title:'操作失败'
+                                                        ,text:'您没有权限，或者票据薄状态不允许完成此操作'
+                                                        ,icon:'warning'
+                                                    });
+                                                    layer.close(loadPad);
+                                                }
+                                            },error:function () {
+                                                swal({
+                                                    title:'操作失败'
+                                                    ,text:'由于某种原因，系统未能成功返回'
+                                                    ,icon:'error'
+                                                });
+                                                layer.close(loadPad);
+                                            }
+                                        });
+                                    }
+                                },error:function () {
+                                    swal({
+                                        title:'操作失败'
+                                        ,text:'由于某种原因，系统未能成功返回'
+                                        ,icon:'error'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                });
+
+                $('#banBtn').click(function () {
+                    event.preventDefault();
+                    swal({
+                        title: "票据薄作废确认",
+                        text: "一旦更新票据状态将无法更改，且该票据薄里的票据都将作废，您考虑好了吗？",
+                        icon: "warning",
+                        buttons: true,
+                        dangerMode: true,
+                    }).then((ok)=>{
+                        if (ok){
+                            let loading=layer.open({
+                                title: '系统消息'
+                                ,content: '正在为您完成操作，请稍候'
+                                ,type:3
+                            });
+                            $.ajax({
+                                url:'/bill/book/status/ban'
+                                ,type:'post'
+                                ,data:{
+                                    'bookId':bookId
+                                },success:function (res) {
+                                    if (res['data']==1){
+                                        swal({
+                                            title:'操作失败'
+                                            ,text:'您没有权限，或者票据薄状态不允许完成此操作'
+                                            ,icon:'warning'
+                                        });
+                                        layer.close(loading);
+                                    }
+                                    if (res['data']==0){
+                                        swal({
+                                            title:'操作成功'
+                                            ,text:'已经成功为您更新票据薄状态'
+                                            ,icon:'success'
+                                        });
+                                        layer.close(loading);
+                                        location.reload();
+                                    }
+                                    if (res['data']==2){
+                                        swal({
+                                            title:'操作失败'
+                                            ,text:'您没有权限，或者票据薄状态不允许完成此操作'
+                                            ,icon:'warning'
+                                        });
+                                        layer.close(loading);
+                                    }
+                                },error:function () {
+                                    swal({
+                                        title:'操作失败'
+                                        ,text:'由于某种原因，系统未能成功返回'
+                                        ,icon:'error'
+                                    });
+                                    layer.close(loading);
+                                }
+                            });
+                        }
+                    });
+                });
+
+                $('#receiveBtn').click(function () {
+                    event.preventDefault();
+                    swal({
+                        title: "票据薄领收确认",
+                        text: "一旦更新票据状态将无法更改，且该票据薄里的票据都将作废，您考虑好了吗？",
+                        icon: "warning",
+                        buttons: true,
+                        dangerMode: true,
+                    }).then((ok)=>{
+                        if (ok){
+                            let loading=layer.open({
+                                title: '系统消息'
+                                ,content: '正在为您完成操作，请稍候'
+                                ,type:3
+                            });
+                            $.ajax({
+                                url:'/bill/book/status/receive'
+                                ,type:'post'
+                                ,data:{
+                                    'bookId':bookId
+                                },success:function (res) {
+                                    if (res['data']==1){
+                                        swal({
+                                            title:'操作失败'
+                                            ,text:'您作为单位直接注册人，可以跳过领收步骤，直接使用票据'
+                                            ,icon:'warning'
+                                        });
+                                        layer.close(loading);
+                                    }
+                                    if (res['data']==0){
+                                        swal({
+                                            title:'操作成功'
+                                            ,text:'已经成功为您更新票据薄状态'
+                                            ,icon:'success'
+                                        });
+                                        layer.close(loading);
+                                        location.reload();
+                                    }
+                                    if (res['data']==2){
+                                        swal({
+                                            title:'操作失败'
+                                            ,text:'您没有权限，或者票据薄状态不允许完成此操作'
+                                            ,icon:'warning'
+                                        });
+                                        layer.close(loading);
+                                    }
+                                },error:function () {
+                                    swal({
+                                        title:'操作失败'
+                                        ,text:'由于某种原因，系统未能成功返回'
+                                        ,icon:'error'
+                                    });
+                                    layer.close(loading);
+                                }
+                            });
+                        }
+                    });
+                });
+
+                $('#useBillBtn').click(function () {
+                    event.preventDefault();
+                    console.log(selectData);
+                    swal({
+                        title: "您确定吗？",
+                        text: "一旦更新选中列状态将无法更改，您考虑好了吗？",
+                        icon: "warning",
+                        buttons: true,
+                        dangerMode: true,
+                    })
+                        .then((ok) => {
+                            if (ok) {
+                                if (selectData.length==0){
+                                    swal({
+                                        title:'系统消息'
+                                        ,text:'您并未选中任一数据列！'
+                                        ,icon:'warning'
+                                    });
+                                }else{
+                                    let idArray=[];
+                                    $.each(selectData,function (n,data) {
+                                        idArray.push(data['billId']);
+                                    });
+                                    let loading=layer.open({
+                                        title: '系统消息'
+                                        ,content: '正在为您完成操作，请稍候'
+                                        ,type:3
+                                    });
+                                    $.ajax({
+                                        url:'/bill/bill/status/use'
+                                        ,type:'post'
+                                        ,data:JSON.stringify(idArray)
+                                        ,dataType:'json'
+                                        ,contentType : 'application/json;charset=utf-8'
+                                        ,success:function (res) {
+                                            if (res['data']==0){
+                                                swal({
+                                                    title:'操作成功'
+                                                    ,text:'已经成功为您更新票据状态'
+                                                    ,icon:'success'
+                                                });
+                                                layer.close(loading);
+                                                location.reload();
+                                            } else{
+                                                swal({
+                                                    title:'操作失败'
+                                                    ,text:'由于某种原因，添加操作未能完成'
+                                                    ,icon:'error'
+                                                });
+                                                layer.close(loading);
+                                            }
+                                        },error:function () {
+                                            swal({
+                                                title:'操作失败'
+                                                ,text:'由于某种原因，系统未能成功返回'
+                                                ,icon:'error'
+                                            });
+                                            layer.close(loading);
+                                        }
+                                    });
+                                }
+                            } else {
+                            }
+                        });
+                });
+
+                $('#queryAllBtn').click(function () {
+                    event.preventDefault();
+                    isStatusQuery=false;
+                    if (!isStatusQuery){
+                        data=queryBills(bookId,pageNo);
+                    } else {
+                        data=queryBillsByStatus(bookId,pageNo,statusCode);
+                    }
+                    if (data != null){
+                        tableRender(data['data'].result);
+                        pageNo=data['data'].pageInfo.pageNum;
+                    }else {
+                        $('#bookBody').html("");
+                    }
+
+                    table.init('billList',{
+                        elem:'#billList',
+                        limit:getPageSize()
+                        ,cellMinWidth: 80
+                    });
+
+                    $('#statusRemark').html('全部');
+                });
+
+                $('#queryReceivBtn').click(function () {
+                    event.preventDefault();
+                    isStatusQuery=true;
+                    statusCode=1;
+                    if (!isStatusQuery){
+                        data=queryBills(bookId,pageNo);
+                    } else {
+                        data=queryBillsByStatus(bookId,pageNo,statusCode);
+                    }
+                    if (data != null){
+                        tableRender(data['data'].result);
+                        pageNo=data['data'].pageInfo.pageNum;
+                    }else {
+                        $('#bookBody').html("");
+                    }
+
+                    table.init('billList',{
+                        elem:'#billList',
+                        limit:getPageSize()
+                        ,cellMinWidth: 80
+                    });
+
+                    $('#statusRemark').html('只看已领收');
+                });
+
+                $('#queryUseBtn').click(function () {
+                    event.preventDefault();
+                    isStatusQuery=true;
+                    statusCode=2;
+                    if (!isStatusQuery){
+                        data=queryBills(bookId,pageNo);
+                    } else {
+                        data=queryBillsByStatus(bookId,pageNo,statusCode);
+                    }
+                    if (data != null){
+                        tableRender(data['data'].result);
+                        pageNo=data['data'].pageInfo.pageNum;
+                    }else {
+                        $('#bookBody').html("");
+                    }
+
+                    table.init('billList',{
+                        elem:'#billList',
+                        limit:getPageSize()
+                        ,cellMinWidth: 80
+                    });
+
+                    $('#statusRemark').html('只看已使用');
+                });
+
+                $('#preBtn').click(function () {
+                    event.preventDefault();
+                    pageNo--;
+                    if (!isStatusQuery){
+                        data=queryBills(bookId,pageNo);
+                    } else {
+                        data=queryBillsByStatus(bookId,pageNo,statusCode);
+                    }
+                    if (data != null){
+                        tableRender(data['data'].result);
+                        pageNo=data['data'].pageInfo.pageNum;
+                    }else {
+                        $('#bookBody').html("");
+                    }
+
+                    table.init('billList',{
+                        elem:'#billList',
+                        limit:getPageSize()
+                        ,cellMinWidth: 80
+                    });
+                });
+
+                $('#nextBtn').click(function () {
+                    event.preventDefault();
+                    pageNo++;
+                    if (!isStatusQuery){
+                        data=queryBills(bookId,pageNo);
+                    } else {
+                        data=queryBillsByStatus(bookId,pageNo,statusCode);
+                    }
+                    if (data != null){
+                        tableRender(data['data'].result);
+                        pageNo=data['data'].pageInfo.pageNum;
+                    }else {
+                        $('#bookBody').html("");
+                    }
+
+                    table.init('billList',{
+                        elem:'#billList',
+                        limit:getPageSize()
+                        ,cellMinWidth: 80
+                    });
+
+                });
+
+                if (!isStatusQuery){
+                    data=queryBills(bookId,pageNo);
+                } else {
+                    data=queryBillsByStatus(bookId,pageNo,statusCode);
+                }
+                if (data != null){
+                    tableRender(data['data'].result);
+                    pageNo=data['data'].pageInfo.pageNum;
+                }else {
+                    $('#bookBody').html("");
+                }
+
+                table.init('billList',{
+                    limit:getPageSize()
+                    ,cellMinWidth: 80
+                });
+            });
+        </script>
+        @}
+    </div>
+</div>
+</body>
+</html>

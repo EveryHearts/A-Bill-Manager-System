@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="/static/layui-extend-config.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/bill-window.css">
+</head>
+<body>
+<h3 style="text-align: center">密码修改页面</h3>
+<form id="modifyForm" class="layui-form">
+    <div class="layui-form-item">
+        <label class="layui-form-label">旧密码:</label>
+        <div class="layui-input-block">
+            <input id="oldPass" class="layui-input" placeholder="请输入旧密码" lay-verify="required" required type="password">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">新密码:</label>
+        <div class="layui-input-block">
+            <input id="newPass" class="layui-input" placeholder="请输入新密码" lay-verify="required" required type="password">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">新密码确认:</label>
+        <div class="layui-input-block">
+            <input id="passCfm" class="layui-input" placeholder="请再次输入新密码" lay-verify="required" required type="password">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button id="submitBtn" lay-submit class="layui-btn">提交修改</button>
+        </div>
+    </div>
+</form>
+<script type="text/javascript">
+    layui.use(['element','layer','form'],function () {
+        let element=layui.element;
+        let layer=layui.layer;
+        let form=layui.form;
+
+        $('#modifyForm').submit(function () {
+            event.preventDefault();
+            let oldPass=$.trim($('#oldPass').val());
+            let newPass=$.trim($('#newPass').val());
+            let pwdCfm=$.trim($('#passCfm').val());
+
+            if (oldPass==null||oldPass==''){
+                layer.msg('请输入旧密码');
+                return;
+            }
+
+            if (newPass==null||newPass==''){
+                layer.msg('请输入新密码');
+                return;
+            }
+
+            if (newPass!=pwdCfm){
+                layer.msg('两次密码确认不一致');
+                return;
+            }
+
+            swal({
+                title: "操作确认",
+                text: "您确定要修改密码吗？",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((ok)=>{
+                let loading=layer.open({
+                    title: '系统消息'
+                    ,content: '正在为您完成操作，请稍候'
+                    ,type:3
+                });
+                $.ajax({
+                    url:'/user/password/modify'
+                    ,type:'post'
+                    ,data:{
+                        'oldPass':oldPass
+                        ,'newPass':newPass
+                    },success:function (res) {
+                        if (res['data']==0){
+                            swal({
+                                title:"成功"
+                                ,text:'密码修改成功'
+                                ,icon:'success'
+                            });
+                            layer.close(loading);
+                        }
+                        if (res['data']==1){
+                            swal({
+                                title:"失败"
+                                ,text:'密码修改失败'
+                                ,icon:'error'
+                            });
+                            layer.close(loading);
+                        }
+                        if (res['data']==2) {
+                            swal({
+                                title:"失败"
+                                ,text:'旧密码填写错误'
+                                ,icon:'error'
+                            });
+                            layer.close(loading);
+                        }
+                    },error:function () {
+                        swal({
+                            title:"错误"
+                            ,text:'系统未能正常返回'
+                            ,icon:'error'
+                        });
+                        layer.close(loading);
+                    }
+                });
+            });
+        });
+    });
+</script>
+</body>
+</html>

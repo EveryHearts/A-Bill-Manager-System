@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>系统反馈及留言</title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="/static/js/dateFormat.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/bg-style.css">
+    <style>
+        .remark {
+            color: #FF00FF;
+        }
+    </style>
+</head>
+<body>
+<div id="navPad"></div>
+<script type="text/javascript">
+    $('#navPad').load('/system/nav');
+</script>
+<div class="layui-card">
+    <div class="layui-card-header">
+        用户反馈与留言
+    </div>
+    <div class="layui-card-body">
+        @if(query_msg == null){
+        <span class="remark">暂无反馈留言</span>
+        @}else{
+        @var pageNum=query_msg.pageInfo.pageNum;
+        @var nextPageNo=pageNum+1;
+        @var prePageNo=pageNum-1;
+        <a href="/system/msg/query?pageNo=${prePageNo}" class="layui-btn layui-btn-xs layui-btn-normal">上一页</a>
+        <a href="/system/msg/query?pageNo=${nextPageNo}" class="layui-btn layui-btn-xs layui-btn-normal">下一页</a>
+        <span style="float: right">
+            第<span class="remark">${pageNum}</span>页
+            该页共<span class="remark">${query_msg.pageInfo.size}</span>条记录
+            共<span class="remark">${query_msg.pageInfo.pages}</span>页
+        </span>
+        <fieldset class="layui-elem-field layui-field-title">
+            <legend>留言记录</legend>
+            <div class="layui-field-box">
+                @for(msg in query_msg.result){
+                <blockquote class="layui-elem-quote layui-quote-nm">
+                    <span class="remark">${msg.createDate}</span>
+                    <br>
+                    <span class="remark">${msg.user}</span> [<span class="remark">${msg.userId}</span>} :
+                    <span>${msg.content}</span>
+                </blockquote>
+                @}
+            </div>
+        </fieldset>
+        @}
+    </div>
+</div>
+<script type="text/javascript">
+    layui.use(['element','layer'],function () {
+        let element=layui.element;
+        let layer=layui.layer;
+    });
+</script>
+</body>
+</html>

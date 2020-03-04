@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员页面</title>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.11.1.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css">
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="/static/js/dateFormat.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/bg-style.css">
+    <style>
+        .remark {
+            color: #FF00FF;
+        }
+    </style>
+</head>
+<body>
+<div id="navPad"></div>
+<script type="text/javascript">
+    $('#navPad').load('/system/nav');
+</script>
+<div class="layui-card">
+    <div class="layui-card-header">
+        管理员页面
+    </div>
+    <div class="layui-card-body">
+        @if(query_record==null){
+        <span class="remark">暂无操作记录</span>
+        @}else{
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">用户ID：</label>
+                    <div class="layui-input-inline">
+                        <input id="userId" class="layui-input" type="text" placeholder="请输入您要查询的用户ID" lay-verify="required|number" required>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <div class="layui-input-inline">
+                        <a lay-submit id="submitBtn" class="layui-btn">查询</a>
+                    </div>
+                </div>
+            </div>
+        @var pageNum=query_record.pageInfo.pageNum;
+        @var nextPageNo=pageNum+1;
+        @var prePageNo=pageNum-1;
+        <a href="/system/admin?pageNo=${prePageNo}" class="layui-btn layui-btn-xs layui-btn-normal">上一页</a>
+        <a href="/system/admin?pageNo=${nextPageNo}" class="layui-btn layui-btn-xs layui-btn-normal">下一页</a>
+        <span style="float: right">
+            第<span class="remark">${pageNum}</span>页
+            该页共<span class="remark">${query_record.pageInfo.size}</span>条记录
+            共<span class="remark">${query_record.pageInfo.pages}</span>页
+        </span>
+        <fieldset class="layui-elem-field layui-field-title">
+            <legend>用户记录</legend>
+            <div class="layui-field-box">
+                @for(record in query_record.result){
+                <blockquote class="layui-elem-quote layui-quote-nm">
+                    <span class="remark">${record.operationDate}</span>
+                    <br>
+                    <span>单位:<span class="remark">${record.unit}</span></span>
+                    <span>操作者ID:<span class="remark">${record.userId}</span></span>
+                    <br>
+                    @if(record.userId == record.objectId){
+                    <span>用户 [<span class="remark">${record.user}</span>] 完成了系统注册</span>
+                    @}else{
+                    <span>用户 [<span class="remark">${record.user}}</span>] 添加了领收员 ID: [<span>${record.objectId}</span>]</span>
+                    @}
+                </blockquote>
+                @}
+            </div>
+        </fieldset>
+        <script type="text/javascript">
+            layui.use(['element','layer','form'],function () {
+                let element=layui.element;
+                let layer=layui.layer;
+                let form=layui.form;
+
+                $('#submitBtn').click(function () {
+                    event.preventDefault();
+                    let userId=$('#userId').val();
+
+                    if (userId==null||userId==''||isNaN(userId)){
+                        layer.msg("请输入数字！");
+                        return;
+                    }
+
+                    layer.open({
+                        title:'角色信息'
+                        ,type:2
+                        ,content:['/system/user/info?userId='+userId,'no']
+                        ,area:['350px','350px']
+                        ,shade:0
+                    });
+                });
+            });
+        </script>
+        @}
+    </div>
+</div>
+</body>
+</html>
